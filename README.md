@@ -82,7 +82,7 @@ FROM pgr_dijkstra('SELECT gid AS id, source, target, cost, reverse_cost FROM way
 LEFT JOIN ways AS w ON r.edge = w.gid;
 ```
 
-Expected output:
+##### Expected output:
 <img src="img/Dijkstras.JPG" width="320" alt="shortest path using dijkstras">
 
 Query to select the roads reachable of 15-minute walking distance (900 seconds):
