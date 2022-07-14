@@ -20,9 +20,69 @@ CREATE DATABASE city_routing; ^
 connect city_routing;
 CREATE EXTENSION pgrouting CASCADE;
 ```
+[This tutorial](https://live.osgeo.org/en/quickstart/pgrouting_quickstart.html) explains the steps taken to set up and verify the pgrouting database in more detail.
 
+### OpenStreetMap road network
+#### Download OpenStreetMap
+There are several ways to download OSM data, you can read more about it [here](https://wiki.openstreetmap.org/wiki/Downloading_data). For this tutorial, I’ve used [Geofabrik](https://www.geofabrik.de/) as the source for downloading OSM data as they provide an easy distribution of it. I downloaded the road network of entire Sweden [here](https://download.geofabrik.de/europe/sweden.html) as __Sweden-latest.osm.bz2__. Be aware that the files can be rather large (the zipped file of Sweden is 1GB and unzipped it is 11GB).
 
+Unzip the __.bz2__ file using [7-zip](https://www.7-zip.org/) or any other compatible software.
 
-```sql
-select * from hej
+#### Prepare the data
+In this tutorial I’ve used osm2pgrouting as the tool to load the data into the database (It will be further explained later). osm2pgrouting is quick but loads all data into memory which may result in OOM Error if your dataset is too big. There are alternative tools to use such as __osm2pgsql__ or __osm2po__ to bypass this issue. I decided to limit my dataset to Sweden’s capital city, Stockholm, so before loading the dataset I clipped it.
+
+For this, __Osmosis__ software was used, installation and configuration can be found [here](https://wiki.openstreetmap.org/wiki/Osmosis#Downloading). You need to either add Osmosis to your environmental variables or run the command from the bin folder of Osmosis (In my case I cd to C:\YourPath\osmosis-0.48.3\bin). To read more about Osmosis go [here](https://wiki.openstreetmap.org/wiki/Osmosis/Detailed_Usage_0.48).
+
+Osmosis command for clipping using a bounding box: \
+```console
+osmosis --read-xml C:\YourPath\sweden-latest.osm --bb left=17.9563 right=18.1481 ^
+top=59.3584 bottom=59.286 completeWays=yes --write-xml stockholm.osm
 ```
+
+If you would like to clip the dataset using a custom polygon you would have to convert it to a .POLY file, you can read more about this [here](https://wiki.openstreetmap.org/wiki/Osmosis/Polygon_Filter_File_Format). If you are familiar with Python, you could use [this function](https://gist.github.com/sebhoerl/9a19135ffeeaede9f0abd4cdfedea3bc).
+
+Osmosis command for clipping using a polygon (this .poly file was generated using the Python function above):
+```console
+osmosis --read-xml C:\YourPath\sweden-latest.osm --bounding-polygon file=stockholm.poly ^
+        completeWays=yes --write-xml stockholm.osm
+```
+
+After this a new .osm file have been produced which covers your area of interest. Now its time to push the data into your pgrouting database.
+
+#### osm2pgrouting
+Cd (change directory) in your command prompt to the directory of your .osm file or write out the entire path under the -f statement.
+
+osm2pgrouting command:
+```console
+osm2pgrouting ^
+-c "C:\Program Files\PostgreSQL\13\bin\mapconfig.xml" ^
+-f stockholm.osm ^
+-d city_routing ^
+-U postgres ^
+-W YourPassWord ^
+    --clean
+```
+
+Now you should have your very own pgrouting database, lets test it!
+
+Open pgAdmin and run the following queries
+
+Query to test shortest distance using Dijkstra’s algorithm on two coordinates:
+```sql
+     with source_tmp as (SELECT source 
+            FROM ways order by st_distance(the_geom, 
+ST_SetSRID(ST_MakePoint(18.01476, 59.32903), 4326)) limit 1),
+    target_tmp as (SELECT target 
+            FROM ways order by st_distance(the_geom, 
+ST_SetSRID(ST_MakePoint(18.0833, 59.3108), 4326)) limit 1)
+
+SELECT * 
+FROM pgr_dijkstra('SELECT gid AS id, source, target, cost, reverse_cost FROM ways', (SELECT source from source_tmp) , 
+                  (SELECT target from target_tmp), true) AS r 
+LEFT JOIN ways AS w ON r.edge = w.gid;
+```
+
+Expected output:
+![shortest path using dijkstras](img/Dijkstras.JPG?raw=true "Title")
+
+Query to select the roads reachable of 15-minute walking distance (900 seconds):
