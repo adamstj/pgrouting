@@ -3,9 +3,7 @@
 In this tutorial we will set up a fully functional, fully open source, road network database. The database could for example be used for shortest path analysis (Dijkstra’s) or to create drive-time areas (Isochrones).
 
 ##### Example of a drive-time analysis conducted using pgrouting (5 min and 10 min walking distance):
-![5 min and 10 min drive-time polygons](img/isochrone_300_600.JPG?raw=true "Title")
-
-<img src="img/isochrone_300_600.JPG" width="320">
+<img src="img/isochrone_300_600.JPG" width="320" alt="5 min and 10 min drive-time polygons">
 
 This tutorial does not intend to give an extensive guide to install and setup each software as there are many flavours to that and much better tutorials existing (some of which are linked to in this tutorial). Instead, it aims to fill the gap of going from A to B of enabling analysis on road data in a fully open-source way, available for anyone.
 
@@ -85,6 +83,6 @@ LEFT JOIN ways AS w ON r.edge = w.gid;
 ```
 
 Expected output:
-![shortest path using dijkstras](img/Dijkstras.JPG?raw=true "Title")
+<img src="img/Dijkstras.JPG" width="320" alt="shortest path using dijkstras">
 
 Query to select the roads reachable of 15-minute walking distance (900 seconds):
