@@ -33,7 +33,7 @@ In this tutorial I’ve used osm2pgrouting as the tool to load the data into the
 
 For this, __Osmosis__ software was used, installation and configuration can be found [here](https://wiki.openstreetmap.org/wiki/Osmosis#Downloading). You need to either add Osmosis to your environmental variables or run the command from the bin folder of Osmosis (In my case I cd to C:\YourPath\osmosis-0.48.3\bin). To read more about Osmosis go [here](https://wiki.openstreetmap.org/wiki/Osmosis/Detailed_Usage_0.48).
 
-Osmosis command for clipping using a bounding box: \
+Osmosis command for clipping using a bounding box:
 ```console
 osmosis --read-xml C:\YourPath\sweden-latest.osm --bb left=17.9563 right=18.1481 ^
 top=59.3584 bottom=59.286 completeWays=yes --write-xml stockholm.osm
@@ -86,3 +86,33 @@ LEFT JOIN ways AS w ON r.edge = w.gid;
 <img src="img/Dijkstras.JPG" width="320" alt="shortest path using dijkstras">
 
 Query to select the roads reachable of 15-minute walking distance (900 seconds):
+```sql
+SELECT 'Nytorget' as name,
+        15 as drive_time,
+ST_Collect(ways.the_geom) as the_geom from ways
+    JOIN (SELECT * from pgr_drivingDistance(
+        'SELECT gid as id
+        , source
+        , target
+        , length_m as cost FROM "ways"      '
+        ,53588,900,FALSE)
+) as route on ways.target = route.node
+```
+
+Query to create isochrone of 15-minute walking distance (900 seconds):
+```sql
+SELECT 'Nytorget' as name,
+        15 as drive_time,
+ST_CollectionExtract(ST_ConcaveHull(ST_Collect(ways.the_geom), 0.99),3) as the_geom from ways
+    JOIN (SELECT * from pgr_drivingDistance(
+        'SELECT gid as id
+        , source
+        , target
+        , length_m as cost FROM "ways"      '
+        ,53588,900,FALSE)
+) as route on ways.target = route.node
+```
+
+Expected output:
+
+<img src="img/isochrone_900_roads.JPG" width="320" alt="driving distance roads"> <img src="img/isochrone_900_convex.JPG" width="320" alt="driving distance convex hull">
