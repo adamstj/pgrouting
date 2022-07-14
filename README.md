@@ -14,7 +14,7 @@ Tutorials for installing PostgreSQL and pgAdmin can for example be found [here](
 #### Create your database using psql terminal
 When you have installed PostgreSQL it is time to set up your database with its required extensions for road data. Pgrouting is the extension which enables setting up a road network database (you can read more about this [here](https://pgrouting.org/)). In turn Pgrouting makes use of another extension called PostGIS. PostGIS is an extension for PostgreSQL for spatial data structures (you can read more about this [here](https://postgis.net/)).
 
-In psql terminal: \
+In psql terminal:
 ```console
 CREATE DATABASE city_routing; ^
 connect city_routing;
