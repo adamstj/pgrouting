@@ -15,6 +15,7 @@ This tutorial does not intend to give an extensive guide to install and setup ea
 </p>
 
 ### Setup
+-------------
 #### Start by installing PostgreSQL and pgAdmin (if you don’t have it already).
 Tutorials for installing PostgreSQL and pgAdmin can for example be found [here](https://www.postgresqltutorial.com/install-postgresql/).
 
@@ -32,6 +33,7 @@ CREATE EXTENSION pgrouting CASCADE;
 [This tutorial](https://live.osgeo.org/en/quickstart/pgrouting_quickstart.html) explains the steps taken to set up and verify the pgrouting database in more detail.
 
 ### OpenStreetMap road network
+-------------
 #### Download OpenStreetMap
 <p align="justify">
 There are several ways to download OSM data, you can read more about it <a href="https://wiki.openstreetmap.org/wiki/Downloading_data">here</a>. For this tutorial, I’ve used <a href="https://www.geofabrik.de/">Geofabrik</a> as the source for downloading OSM data as they provide an easy distribution of it. I downloaded the road network of entire Sweden <a href="https://download.geofabrik.de/europe/sweden.html">here</a> as <b><i>Sweden-latest.osm.bz2</i></b>. Be aware that the files can be rather large (the zipped file of Sweden is 1GB and unzipped it is 11GB). Unzip the <b><i>.bz2</b></i> file using <a href="https://www.7-zip.org/">7-zip</a> or any other compatible software.
@@ -79,8 +81,9 @@ osm2pgrouting ^
 ```
 
 Now you should have your very own pgrouting database, lets test it!
+-------------
 
-Open pgAdmin and run the following queries
+**Open pgAdmin and run the following queries**
 
 ##### Query to test shortest distance using Dijkstra’s algorithm on two coordinates:
 ```sql
