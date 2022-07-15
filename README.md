@@ -20,8 +20,8 @@ Tutorials for installing PostgreSQL and pgAdmin can for example be found [here](
 When you have installed PostgreSQL it is time to set up your database with its required extensions for road data. Pgrouting is the extension which enables setting up a road network database (you can read more about this <a href="https://pgrouting.org/">here</a>. In turn Pgrouting makes use of another extension called PostGIS. PostGIS is an extension for PostgreSQL for spatial data structures (you can read more about this <a href="https://postgis.net/">here</a>.
 </p>
 
-In psql terminal:
-```console
+##### In psql terminal:
+```shell
 CREATE DATABASE city_routing; ^
 connect city_routing;
 CREATE EXTENSION pgrouting CASCADE;
@@ -31,7 +31,7 @@ CREATE EXTENSION pgrouting CASCADE;
 ### OpenStreetMap road network
 #### Download OpenStreetMap
 <p align="justify">
-There are several ways to download OSM data, you can read more about it <a href="https://wiki.openstreetmap.org/wiki/Downloading_data">here</a>. For this tutorial, I’ve used <a href="https://www.geofabrik.de/">Geofabrik</a> as the source for downloading OSM data as they provide an easy distribution of it. I downloaded the road network of entire Sweden <a href="https://download.geofabrik.de/europe/sweden.html">here</a> as <b><i>Sweden-latest.osm.bz2</i></b>. Be aware that the files can be rather large (the zipped file of Sweden is 1GB and unzipped it is 11GB). Unzip the __.bz2__ file using <a href="https://www.7-zip.org/">7-zip</a> or any other compatible software.
+There are several ways to download OSM data, you can read more about it <a href="https://wiki.openstreetmap.org/wiki/Downloading_data">here</a>. For this tutorial, I’ve used <a href="https://www.geofabrik.de/">Geofabrik</a> as the source for downloading OSM data as they provide an easy distribution of it. I downloaded the road network of entire Sweden <a href="https://download.geofabrik.de/europe/sweden.html">here</a> as <b><i>Sweden-latest.osm.bz2</i></b>. Be aware that the files can be rather large (the zipped file of Sweden is 1GB and unzipped it is 11GB). Unzip the <b><i>.bz2</b></i> file using <a href="https://www.7-zip.org/">7-zip</a> or any other compatible software.
 </p>
 
 #### Prepare the data
@@ -42,16 +42,16 @@ In this tutorial I’ve used osm2pgrouting as the tool to load the data into the
 For this, <b><i>Osmosis</b></i> software was used, installation and configuration can be found [here](https://wiki.openstreetmap.org/wiki/Osmosis#Downloading). You need to either add Osmosis to your environmental variables or run the command from the bin folder of Osmosis (In my case I cd to C:\YourPath\osmosis-0.48.3\bin). To read more about Osmosis go [here](https://wiki.openstreetmap.org/wiki/Osmosis/Detailed_Usage_0.48).
 
 
-Osmosis command for clipping using a bounding box:
-```console
+##### Osmosis command for clipping using a bounding box:
+```shell
 osmosis --read-xml C:\YourPath\sweden-latest.osm --bb left=17.9563 right=18.1481 ^
 top=59.3584 bottom=59.286 completeWays=yes --write-xml stockholm.osm
 ```
 
 If you would like to clip the dataset using a custom polygon you would have to convert it to a .POLY file, you can read more about this [here](https://wiki.openstreetmap.org/wiki/Osmosis/Polygon_Filter_File_Format). If you are familiar with Python, you could use [this function](https://gist.github.com/sebhoerl/9a19135ffeeaede9f0abd4cdfedea3bc).
 
-Osmosis command for clipping using a polygon (this .poly file was generated using the Python function above):
-```console
+##### Osmosis command for clipping using a polygon (this .poly file was generated using the Python function above):
+```shell
 osmosis --read-xml C:\YourPath\sweden-latest.osm --bounding-polygon file=stockholm.poly ^
         completeWays=yes --write-xml stockholm.osm
 ```
@@ -61,8 +61,8 @@ After this a new .osm file have been produced which covers your area of interest
 #### osm2pgrouting
 Cd (change directory) in your command prompt to the directory of your .osm file or write out the entire path under the -f statement.
 
-osm2pgrouting command:
-```console
+##### osm2pgrouting command:
+```shell
 osm2pgrouting ^
 -c "C:\Program Files\PostgreSQL\13\bin\mapconfig.xml" ^
 -f stockholm.osm ^
@@ -76,52 +76,67 @@ Now you should have your very own pgrouting database, lets test it!
 
 Open pgAdmin and run the following queries
 
-Query to test shortest distance using Dijkstra’s algorithm on two coordinates:
+##### Query to test shortest distance using Dijkstra’s algorithm on two coordinates:
 ```sql
-     with source_tmp as (SELECT source 
-            FROM ways order by st_distance(the_geom, 
-ST_SetSRID(ST_MakePoint(18.01476, 59.32903), 4326)) limit 1),
-    target_tmp as (SELECT target 
-            FROM ways order by st_distance(the_geom, 
-ST_SetSRID(ST_MakePoint(18.0833, 59.3108), 4326)) limit 1)
+with source_tmp AS (SELECT source 
+            FROM ways 
+            ORDER BY st_distance(the_geom, 
+                ST_SetSRID(ST_MakePoint(18.01476, 59.32903), 4326)) limit 1),
+     target_tmp AS (SELECT target 
+            FROM ways 
+            ORDER BY st_distance(the_geom, 
+                ST_SetSRID(ST_MakePoint(18.0833, 59.3108), 4326)) limit 1)
 
 SELECT * 
-FROM pgr_dijkstra('SELECT gid AS id, source, target, cost, reverse_cost FROM ways', (SELECT source from source_tmp) , 
-                  (SELECT target from target_tmp), true) AS r 
-LEFT JOIN ways AS w ON r.edge = w.gid;
+FROM pgr_dijkstra('SELECT gid AS id
+                  , source
+                  , target
+                  , cost
+                  , reverse_cost 
+                  FROM ways'
+                  , (SELECT source from source_tmp) 
+                  , (SELECT target from target_tmp), true) AS r 
+LEFT JOIN ways AS w 
+ON r.edge = w.gid;
 ```
 
 ##### Expected output:
 <img src="img/Dijkstras.JPG" width="320" alt="shortest path using dijkstras">
 
-Query to select the roads reachable of 15-minute walking distance (900 seconds):
+##### Query to select the roads reachable of 15-minute walking distance (900 seconds):
 ```sql
-SELECT 'Nytorget' as name,
-        15 as drive_time,
-ST_Collect(ways.the_geom) as the_geom from ways
-    JOIN (SELECT * from pgr_drivingDistance(
-        'SELECT gid as id
+SELECT 'Nytorget' AS name,
+        15 AS drive_time,
+        ST_Collect(ways.the_geom) AS the_geom 
+        FROM ways
+    JOIN (SELECT * FROM pgr_drivingDistance(
+        'SELECT gid AS id
         , source
         , target
-        , length_m as cost FROM "ways"      '
+        , length_m AS cost 
+        FROM "ways"      '
         ,53588,900,FALSE)
-) as route on ways.target = route.node
+) AS route 
+  ON ways.target = route.node
 ```
 
-Query to create isochrone of 15-minute walking distance (900 seconds):
+##### Query to create isochrone of 15-minute walking distance (900 seconds):
 ```sql
-SELECT 'Nytorget' as name,
-        15 as drive_time,
-ST_CollectionExtract(ST_ConcaveHull(ST_Collect(ways.the_geom), 0.99),3) as the_geom from ways
-    JOIN (SELECT * from pgr_drivingDistance(
-        'SELECT gid as id
+SELECT 'Nytorget' AS name,
+        15 AS drive_time,
+        ST_CollectionExtract(ST_ConcaveHull(ST_Collect(ways.the_geom), 0.99),3) AS the_geom
+        FROM ways
+    JOIN (SELECT * FROM pgr_drivingDistance(
+        'SELECT gid AS id
         , source
         , target
-        , length_m as cost FROM "ways"      '
+        , length_m AS cost 
+        FROM "ways"      '
         ,53588,900,FALSE)
-) as route on ways.target = route.node
+) AS route 
+  ON ways.target = route.node
 ```
 
-Expected output:
+##### Expected output:
 
 <img src="img/isochrone_900_roads.JPG" width="320" alt="driving distance roads"> <img src="img/isochrone_900_convex.JPG" width="320" alt="driving distance convex hull">
