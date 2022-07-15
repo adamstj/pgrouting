@@ -4,8 +4,11 @@
 In this tutorial we will set up a fully functional, fully open source, road network database. The database could for example be used for shortest path analysis (Dijkstra’s) or to create drive-time areas (Isochrones).
 </p>
 
-##### Example of a drive-time analysis conducted using pgrouting (5 min and 10 min walking distance):
+
+<h5 align="center">Example of a drive-time analysis conducted using pgrouting (5 min and 10 min walking distance):</h5>
+<p align="center">
 <img src="img/isochrone_300_600.JPG" width="320" alt="5 min and 10 min drive-time polygons">
+</p>
 
 <p align="justify">
 This tutorial does not intend to give an extensive guide to install and setup each software as there are many flavours to that and much better tutorials existing (some of which are linked to in this tutorial). Instead, it aims to fill the gap of going from A to B of enabling analysis on road data in a fully open-source way, available for anyone.
@@ -39,16 +42,19 @@ There are several ways to download OSM data, you can read more about it <a href=
 In this tutorial I’ve used osm2pgrouting as the tool to load the data into the database (It will be further explained later). osm2pgrouting is quick but loads all data into memory which may result in OOM Error if your dataset is too big. There are alternative tools to use such as <b><i>osm2pgsql</i></b> or <b><i>osm2po</i></b> to bypass this issue. I decided to limit my dataset to Sweden’s capital city, Stockholm, so before loading the dataset I clipped it.
 </p>
 
-For this, <b><i>Osmosis</b></i> software was used, installation and configuration can be found [here](https://wiki.openstreetmap.org/wiki/Osmosis#Downloading). You need to either add Osmosis to your environmental variables or run the command from the bin folder of Osmosis (In my case I cd to C:\YourPath\osmosis-0.48.3\bin). To read more about Osmosis go [here](https://wiki.openstreetmap.org/wiki/Osmosis/Detailed_Usage_0.48).
-
+<p align="justify">
+For this, <b><i>Osmosis</b></i> software was used, installation and configuration can be found <a href="https://wiki.openstreetmap.org/wiki/Osmosis#Downloading">here</a>. You need to either add Osmosis to your environmental variables or run the command from the bin folder of Osmosis (In my case I cd to <i>C:\YourPath\osmosis-0.48.3\bin</i>). To read more about Osmosis go <a href="https://wiki.openstreetmap.org/wiki/Osmosis/Detailed_Usage_0.48">here</a>.
+</p>
+        
 
 ##### Osmosis command for clipping using a bounding box:
 ```shell
 osmosis --read-xml C:\YourPath\sweden-latest.osm --bb left=17.9563 right=18.1481 ^
 top=59.3584 bottom=59.286 completeWays=yes --write-xml stockholm.osm
 ```
-
-If you would like to clip the dataset using a custom polygon you would have to convert it to a .POLY file, you can read more about this [here](https://wiki.openstreetmap.org/wiki/Osmosis/Polygon_Filter_File_Format). If you are familiar with Python, you could use [this function](https://gist.github.com/sebhoerl/9a19135ffeeaede9f0abd4cdfedea3bc).
+<p align="justify">
+If you would like to clip the dataset using a custom polygon you would have to convert it to a .POLY file, you can read more about this <a href="https://wiki.openstreetmap.org/wiki/Osmosis/Polygon_Filter_File_Format">here</a>. If you are familiar with Python, you could use <a href="https://gist.github.com/sebhoerl/9a19135ffeeaede9f0abd4cdfedea3bc">this function</a>.
+</p>
 
 ##### Osmosis command for clipping using a polygon (this .poly file was generated using the Python function above):
 ```shell
@@ -100,9 +106,11 @@ LEFT JOIN ways AS w
 ON r.edge = w.gid;
 ```
 
-##### Expected output:
+<h5 align="center">Expected output:</h5>
+<p align="center">
 <img src="img/Dijkstras.JPG" width="320" alt="shortest path using dijkstras">
-
+</p>
+        
 ##### Query to select the roads reachable of 15-minute walking distance (900 seconds):
 ```sql
 SELECT 'Nytorget' AS name,
@@ -137,6 +145,7 @@ SELECT 'Nytorget' AS name,
   ON ways.target = route.node
 ```
 
-##### Expected output:
-
+<h5 align="center">Expected output:</h5>
+<p align="center">
 <img src="img/isochrone_900_roads.JPG" width="320" alt="driving distance roads"> <img src="img/isochrone_900_convex.JPG" width="320" alt="driving distance convex hull">
+</p>
